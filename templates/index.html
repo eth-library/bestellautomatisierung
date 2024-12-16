@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bestelllisten-Generator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <header>
+        <div class="header-container">
+            <img src="{{ url_for('static', filename='img/ETH_logo.png') }}" alt="ETH-Bibliothek Logo" class="eth-logo">
+        </div>
+    </header>
+
+    <div class="container">
+        <h1>Bestelllisten-Generator</h1>
+
+        <div class="upload-box">
+            <div class="upload-info" id="file-list">
+                <!-- Hier wird die Liste der hochgeladenen Dateien angezeigt -->
+                <p>Keine Listen vorhanden.</p>
+            </div>
+        </div>
+
+        <form id="upload-form" enctype="multipart/form-data">
+            <div class="buttons">
+                <label class="upload-button">
+                    Dateien hochladen
+                    <input type="file" name="file" id="file-input" multiple onchange="uploadFiles()">
+                </label>
+                <button type="button" onclick="processAndDownloadOrderList()" class="action-button">
+                    Bestellliste erstellen und herunterladen
+                </button>
+            </div>
+        </form>
+
+        <!-- Neue Liste Generieren Button, wird erst angezeigt, wenn eine Liste erstellt wurde -->
+        <div class="new-list-button-container" id="new-list-button-container" style="display:none;">
+            <button type="button" onclick="clearAllFiles()" class="action-button new-list-button">
+                Neue Liste generieren
+            </button>
+        </div>
+
+        <!-- Neuer Container für Mapping-Ergänzungen -->
+        <div class="add-mapping-container">
+            <h2>Fehlenden Verlag hinzufügen</h2>
+            <div class="mapping-form">
+                <input type="text" id="new-verlag" placeholder="Verlag">
+                <input type="text" id="new-lieferant" placeholder="Lieferant">
+                <button type="button" onclick="addMapping()" class="action-button">Hinzufügen</button>
+            </div>
+            <div id="mapping-messages" class="flash-messages"></div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-container">
+            <p>&copy; 2024 ETH-Bibliothek - Integrierte Medienbearbeitung</p>
+        </div>
+    </footer>
+
+    <script>
+        console.log("JavaScript ist geladen und wird ausgeführt.");
+
+        function fetchUploadedFiles() {
+            console.log("fetchUploadedFiles() wurde aufgerufen.");
+            fetch('/get_uploaded_files')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Fehler beim Abrufen der Dateiliste.');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    let fileList = document.getElementById('file-list');
+                    fileList.innerHTML = ''; // Vorherigen Inhalt löschen
+
+                    if (data.error) {
+                        fileList.innerHTML = `<p>Fehler beim Abrufen der Dateiliste: ${data.error}</p>`;
+                    } else {
+                        if (data.length === 0) {
+                            fileList.innerHTML = '<p>Keine Listen vorhanden.</p>';
+                        } else {
+                            let ul = document.createElement('ul');
+                            data.forEach((file) => {
+                                let li = document.createElement('li');
+                                li.textContent = file;
+
+                                // Lösch-Button für jede Datei hinzufügen
+                                let deleteButton = document.createElement('button');
+                                deleteButton.textContent = 'Löschen';
+                                deleteButton.classList.add('delete-button');
+                                deleteButton.onclick = () => deleteFile(file, li);
+
+                                li.appendChild(deleteButton);
+                                ul.appendChild(li);
+                            });
+                            fileList.appendChild(ul);
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Fehler beim Abrufen der Dateiliste:', error);
+                    document.getElementById('file-list').innerHTML = `<p>${error.message}</p>`;
+                });
+        }
+
+        // Datei-Liste beim Laden der Seite abrufen
+        window.onload = function () {
+            console.log("window.onload wird ausgeführt.");
+            fetchUploadedFiles();
+        };
+
+        function uploadFiles() {
+            let input = document.getElementById('file-input');
+            let files = input.files;
+
+            if (files.length === 0) {
+                alert('Bitte wählen Sie Dateien zum Hochladen aus.');
+                return;
+            }
+
+            let formData = new FormData();
+            for (let i = 0; i < files.length; i++) {
+                formData.append('file', files[i]);
+            }
+
+            fetch('/', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Fehler beim Hochladen der Dateien.');
+                    }
+                    return response.text();
+                })
+                .then(data => {
+                    console.log(data);
+                    fetchUploadedFiles(); // Liste aktualisieren, ohne die Seite neu zu laden
+                })
+                .catch(error => {
+                    console.error('Fehler beim Hochladen der Dateien:', error);
+                });
+        }
+
+        function deleteFile(fileName, listItem) {
+            fetch(`/delete_file/${fileName}`, {
+                method: 'DELETE'
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Fehler beim Löschen der Datei.');
+                    }
+                    return response.text();
+                })
+                .then(data => {
+                    console.log(data);
+                    listItem.remove(); // Das Listenelement aus der Anzeige entfernen
+                    // Prüfen, ob die Liste leer ist
+                    if (document.getElementById('file-list').getElementsByTagName('ul')[0]?.children.length === 0) {
+                        document.getElementById('file-list').innerHTML = '<p>Keine Listen vorhanden.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Fehler beim Löschen der Datei:', error);
+                });
+        }
+
+        function processAndDownloadOrderList() {
+            // Diese Funktion ruft zuerst den Prozess-Endpunkt auf und dann den Download-Endpunkt
+            fetch('/process', {
+                method: 'POST'
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Fehler bei der Verarbeitung der Bestellliste.');
+                    }
+                    return response.text();
+                })
+                .then(data => {
+                    console.log(data);
+                    // Direkt zur Download-Route weiterleiten
+                    downloadOrderList();
+                    // Zeige den "Neue Liste Generieren" Button an
+                    document.getElementById('new-list-button-container').style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Fehler bei der Verarbeitung der Bestellliste:', error);
+                });
+        }
+
+        function downloadOrderList() {
+            // Die Seite wird direkt zur Download-Route weitergeleitet
+            window.location.href = '/download';
+        }
+
+        function clearAllFiles() {
+            fetch('/clear_files', {
+                method: 'DELETE'
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Fehler beim Löschen der Dateien.');
+                    }
+                    return response.text();
+                })
+                .then(data => {
+                    console.log(data);
+                    // Wartezeit einfügen, um sicherzustellen, dass das Dateisystem alle Änderungen verarbeitet hat
+                    setTimeout(() => {
+                        window.location.reload(); // Seite neu laden, nachdem alle Dateien gelöscht wurden
+                    }, 1000);
+                })
+                .catch(error => {
+                    console.error('Fehler beim Löschen der Dateien:', error);
+                });
+        }
+
+        function addMapping() {
+            const verlag = document.getElementById("new-verlag").value.trim();
+            const lieferant = document.getElementById("new-lieferant").value.trim();
+
+            if (verlag === "" || lieferant === "") {
+                alert("Bitte sowohl Verlag als auch Lieferant eingeben.");
+                return;
+            }
+
+            fetch('/add_mapping', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    verlag: verlag,
+                    lieferant: lieferant
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById("mapping-messages").textContent = data.error;
+                    } else {
+                        document.getElementById("mapping-messages").textContent = data.message;
+                    }
+                    setTimeout(() => {
+                        document.getElementById("mapping-messages").textContent = "";
+                    }, 3000);
+                })
+                .catch(error => {
+                    console.error('Fehler beim Hinzufügen des Mappings:', error);
+                    document.getElementById("mapping-messages").textContent = "Fehler beim Hinzufügen des Mappings.";
+                    setTimeout(() => {
+                        document.getElementById("mapping-messages").textContent = "";
+                    }, 3000);
+                });
+        }
+    </script>
+</body>
+
+</html>
