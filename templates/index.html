@@ -185,6 +185,11 @@
                     console.log(data);
                     // Direkt zur Download-Route weiterleiten
                     downloadOrderList();
+
+                    // Buttons ausblenden
+                    document.querySelector('.upload-button').style.display = 'none';
+                    document.querySelector('.action-button').style.display = 'none';
+
                     // Zeige den "Neue Liste Generieren" Button an
                     document.getElementById('new-list-button-container').style.display = 'block';
                 })
@@ -210,6 +215,14 @@
                 })
                 .then(data => {
                     console.log(data);
+
+                    // Buttons wieder anzeigen
+                    document.querySelector('.upload-button').style.display = 'inline-block';
+                    document.querySelector('.action-button').style.display = 'inline-block';
+
+                    // Verstecke den "Neue Liste Generieren" Button
+                    document.getElementById('new-list-button-container').style.display = 'none';
+
                     // Wartezeit einfügen, um sicherzustellen, dass das Dateisystem alle Änderungen verarbeitet hat
                     setTimeout(() => {
                         window.location.reload(); // Seite neu laden, nachdem alle Dateien gelöscht wurden
