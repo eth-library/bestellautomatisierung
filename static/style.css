@@ -31,8 +31,8 @@ header {
 }
 
 .container {
-    max-width: 600px;
-    margin: 100px auto;
+    max-width: 650px;
+    margin: 20px auto;
     padding: 30px;
     background-color: #3498db;
     border-radius: 15px;
@@ -75,7 +75,7 @@ h1 {
 }
 
 .new-list-button-container {
-    margin-top: 20px;
+    margin-top: 10px;
     text-align: center;
 }
 
@@ -92,7 +92,7 @@ h1 {
 }
 
 .new-list-button:hover {
-    background-color: #14772a !important;
+    background-color: #05671b !important;
 }
 
 .upload-button,
