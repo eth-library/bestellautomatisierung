@@ -1,6 +1,6 @@
 from flask import Flask, request, render_template, send_file, redirect, url_for, flash, jsonify
 from flask_httpauth import HTTPBasicAuth
-from auth import USERNAME, PASSWORD  # Import the credential
+from auth import USERNAME, PASSWORD  # Import the credentials
 from datetime import datetime
 from paths import PathManager
 from data_processor import DataProcessor
