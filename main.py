@@ -1,5 +1,6 @@
 from flask import Flask, request, render_template, send_file, redirect, url_for, flash, jsonify
 from flask_httpauth import HTTPBasicAuth
+from auth import USERNAME, PASSWORD  # Import the credential
 from datetime import datetime
 from paths import PathManager
 from data_processor import DataProcessor
@@ -13,20 +14,17 @@ app.secret_key = 'your_secret_key'
 # Basic Authentication Setup
 auth = HTTPBasicAuth()
 
-# Hard-coded credentials
-USERNAME = "admin"
-PASSWORD = "your_password_here"
-
+# Define the authentication function
 @auth.verify_password
 def verify_password(username, password):
     if username == USERNAME and password == PASSWORD:
         return username
+    return None
 
-# Protect all routes by applying the @auth.login_required decorator globally
+# Protect the entire app
 @app.before_request
 @auth.login_required
-def before_request():
-    """Runs before every request to enforce authentication."""
+def protect_all_routes():
     pass
 
 # Pfadmanager für dynamische Pfade
