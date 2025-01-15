@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import time
 from openpyxl import Workbook
 from flask import flash
 from csv_loader import CSVLoader
@@ -119,7 +120,7 @@ class DataProcessor:
                     self._process_905c(ws, start_row)
 
                     start_row += 1
-
+                    time.sleep(0.1)
             except Exception as e:
                 flash(f"Fehler beim Verarbeiten der Datei {file}: {e}", 'error')
                 print(f"Fehler beim Verarbeiten der Datei {file}: {e}")
