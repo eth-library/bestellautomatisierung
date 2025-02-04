@@ -1,6 +1,5 @@
 import os
 import pandas as pd
-import time
 from openpyxl import Workbook
 from flask import flash
 from csv_loader import CSVLoader
@@ -94,9 +93,9 @@ class DataProcessor:
                         # Bindestriche in ISBN und .0 am Ende des Wertes entfernen
                         if column_title == "020$a":
                             value = value.replace('-', '')  # Bindestriche entfernen
-                            value = value.split('.')[0]  # Entfernt '.0' am Ende des Wertes
+                            value = value.split('.')[0]      # Entfernt '.0' am Ende des Wertes
 
-                        # Artikel werden in <<>>-Klammern gesetzt. Die Artikel befinden sich im Articles-Mapping. 
+                        # Artikel werden in <<>>-Klammern gesetzt. Die Artikel befinden sich im Articles-Mapping.
                         if column_title == "24510$a":
                             title = str(value)
                             for article, formatted_article in self.articles.items():
@@ -120,10 +119,13 @@ class DataProcessor:
                     self._process_905c(ws, start_row)
 
                     start_row += 1
-                    time.sleep(0.1)
+
             except Exception as e:
                 flash(f"Fehler beim Verarbeiten der Datei {file}: {e}", 'error')
                 print(f"Fehler beim Verarbeiten der Datei {file}: {e}")
+
+        # Entferne alle Zeilen, in denen das Feld "24510$a" (Titel) leer ist.
+        self._remove_empty_rows(ws)
 
         try:
             wb.save(self.paths["output_file"])
@@ -188,3 +190,16 @@ class DataProcessor:
             ws.cell(row=row, column=col_905c, value=mapped_value)
         else:
             print(f"Kein gültiges Mapping für 905$n '{value_905n}' in Zeile {row} gefunden.")
+
+    def _remove_empty_rows(self, ws):
+        """
+        Entfernt alle Zeilen (außer der Kopfzeile), in denen das Feld "24510$a" (Titel) leer ist.
+        """
+        # Ermittle den Spaltenindex für "24510$a" (Titel)
+        title_col_index = self.columns.index("24510$a") + 1  # openpyxl verwendet 1-basierte Indizes
+
+        # Von der letzten Zeile bis zur zweiten Zeile iterieren (Kopfzeile bleibt erhalten)
+        for row in range(ws.max_row, 1, -1):
+            cell_value = ws.cell(row=row, column=title_col_index).value
+            if cell_value is None or str(cell_value).strip() == "":
+                ws.delete_rows(row)
