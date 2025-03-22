@@ -3,6 +3,9 @@ import pandas as pd
 from openpyxl import Workbook
 from flask import flash
 from csv_loader import CSVLoader
+from duplicate_checker import check_duplicates
+from datetime import datetime
+
 
 
 class DataProcessor:
@@ -41,11 +44,12 @@ class DataProcessor:
             "E06": "01"
         }
 
-        # Output-Ordner definieren
+        # Output-Ordner definieren und Dateinamen mit Zeitstempel erzeugen
         output_folder = os.path.join(os.getcwd(), "output")
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
-        self.paths["output_file"] = os.path.join(output_folder, "output.xlsx")
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.paths["output_file"] = os.path.join(output_folder, f"Bestellliste_{timestamp}.xlsx")
 
         # CSVLoader initialisieren und Mappings laden
         self.csv_loader = CSVLoader(paths)
@@ -126,6 +130,10 @@ class DataProcessor:
 
         # Entferne alle Zeilen, in denen das Feld "24510$a" (Titel) leer ist.
         self._remove_empty_rows(ws)
+
+        # 🔥 Dublettenprüfung direkt auf der geladenen Datei ausführen
+        print("\n🔎 Starte Dublettenprüfung...")
+        check_duplicates(wb, "Importdaten Alma")  # 👈 Direktes Weitergeben des Workbook-Objekts
 
         try:
             wb.save(self.paths["output_file"])
