@@ -37,11 +37,6 @@
             </div>
         </form>
 
-        <!-- ✅ Verarbeitung läuft... Meldung -->
-        <div id="processing-message" style="display: none; margin-top: 20px; font-size: 1.2em; color: #ffffff; font-weight: bold;">
-            Verarbeitung läuft... ⏳
-        </div>
-
         <!-- Neue Liste Generieren Button, wird erst angezeigt, wenn eine Liste erstellt wurde -->
         <div class="new-list-button-container" id="new-list-button-container" style="display:none;">
             <button type="button" onclick="clearAllFiles()" class="action-button new-list-button">
@@ -237,41 +232,6 @@
                     console.error('Fehler beim Löschen der Dateien:', error);
                 });
         }
-
-        function processAndDownloadOrderList() {
-            // ✅ Verarbeitung läuft-Meldung einblenden
-            document.getElementById('processing-message').style.display = 'block';
-
-            fetch('/process', {
-                method: 'POST'
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Fehler bei der Verarbeitung der Bestellliste.');
-                    }
-                    return response.text();
-                })
-                .then(data => {
-                    console.log(data);
-                    // Direkt zur Download-Route weiterleiten
-                    downloadOrderList();
-
-                    // ✅ Verarbeitung läuft-Meldung ausblenden
-                    document.getElementById('processing-message').style.display = 'none';
-
-                    // ✅ Zeige den "Neue Liste generieren"-Button an
-                    document.getElementById('new-list-button-container').style.display = 'block';
-
-                    // ✅ Buttons ausblenden
-                    document.querySelector('.upload-button').style.display = 'none';
-                    document.querySelector('.action-button').style.display = 'none';
-                })
-                .catch(error => {
-                    console.error('Fehler bei der Verarbeitung der Bestellliste:', error);
-                    document.getElementById('processing-message').style.display = 'none';
-                });
-        }
-
 
         function addMapping() {
             const verlag = document.getElementById("new-verlag").value.trim();
