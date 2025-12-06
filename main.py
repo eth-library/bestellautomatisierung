@@ -4,6 +4,7 @@ from auth import USERNAME, PASSWORD  # Import the credentials
 from datetime import datetime
 from paths import PathManager
 from data_processor import DataProcessor
+from duplicate_checker import DuplicateChecker
 import os
 import time
 import csv
@@ -30,6 +31,9 @@ def protect_all_routes():
 # Pfadmanager für dynamische Pfade
 path_manager = PathManager()
 paths = path_manager.get_paths()
+
+# SRU Base URL für Swisscovery (wird später vom User konfigurierbar sein)
+SWISSCOVERY_SRU_URL = "https://slsp-eth.alma.exlibrisgroup.com/view/sru/41SLSP_ETH"  # Wird vom Benutzer gesetzt
 
 def ensure_directory_exists(directory, retries=5, delay=1):
     """Erstelle das Verzeichnis, wenn es nicht existiert, mit wiederholter Prüfung."""
@@ -99,16 +103,41 @@ def process_files():
         input_file_paths = [os.path.join(paths["input_dir"], file) for file in input_files if file.endswith('.xlsx')]
 
         if not input_file_paths:
-            flash("Keine gültigen Dateien zum Verarbeiten gefunden.", 'error')
-            return redirect(url_for('upload_file'))
+            return jsonify({"error": "Keine gültigen Dateien zum Verarbeiten gefunden."}), 400
 
         data_processor.process_files(input_file_paths)
 
-        flash("Bestellliste wurde erfolgreich erstellt.", 'success')
-        return redirect(url_for('download_file'))
+        return jsonify({"message": "Bestellliste wurde erfolgreich erstellt."}), 200
     except Exception as e:
-        flash(f"Fehler bei der Verarbeitung der Bestellliste: {str(e)}", 'error')
-        return redirect(url_for('upload_file'))
+        return jsonify({"error": f"Fehler bei der Verarbeitung: {str(e)}"}), 500
+
+@app.route("/check_duplicates", methods=["POST"])
+def check_duplicates():
+    """Führt Dublettenkontrolle auf der verarbeiteten Excel-Datei durch"""
+    try:
+        # SRU-URL aus Request holen (oder Default verwenden)
+        data = request.get_json()
+        sru_url = data.get('sru_url', SWISSCOVERY_SRU_URL)
+
+        if not sru_url:
+            return jsonify({"error": "SRU-URL fehlt. Bitte konfigurieren Sie die Swisscovery-URL."}), 400
+
+        output_file_path = paths["output_file"]
+
+        if not os.path.exists(output_file_path):
+            return jsonify({"error": "Keine verarbeitete Datei gefunden. Bitte erst verarbeiten."}), 400
+
+        # Dublettenkontrolle durchführen
+        checker = DuplicateChecker(sru_url)
+        stats = checker.check_excel_file_for_duplicates(output_file_path)
+
+        return jsonify({
+            "message": "Dublettenkontrolle abgeschlossen.",
+            "stats": stats
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Fehler bei der Dublettenkontrolle: {str(e)}"}), 500
 
 @app.route("/download")
 def download_file():

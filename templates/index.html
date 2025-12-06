@@ -4,128 +4,537 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bestelllisten-Generator</title>
+    <meta name="description" content="ETH-Bibliothek Bestelllisten-Generator für die integrierte Medienbearbeitung">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="color-scheme" content="light">
+
+    <title>Bestelllisten-Generator | ETH-Bibliothek</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon-16x16.png') }}">
+
+    <!-- Styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <!-- Preload Logo -->
+    <link rel="preload" href="{{ url_for('static', filename='img/ETH_logo.png') }}" as="image">
 </head>
 
 <body>
-    <header>
-        <div class="header-container">
-            <img src="{{ url_for('static', filename='img/ETH_logo.png') }}" alt="ETH-Bibliothek Logo" class="eth-logo">
+    <!-- Toast Container for Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Header -->
+    <header class="app-header" role="banner">
+        <div class="header-content">
+            <div class="logo-section">
+                <img src="{{ url_for('static', filename='img/ETH_logo.png') }}"
+                     alt="ETH-Bibliothek Logo"
+                     class="eth-logo">
+                <div class="app-title-group">
+                    <h1 class="app-title">Bestelllisten-Generator</h1>
+                    <p class="app-subtitle">Integrierte Medienbearbeitung</p>
+                </div>
+            </div>
         </div>
     </header>
 
-    <div class="container">
-        <h1>Bestelllisten-Generator</h1>
+    <!-- Main Content -->
+    <main class="app-main" role="main">
+        <div class="container">
 
-        <div class="upload-box">
-            <div class="upload-info" id="file-list">
-                <!-- Hier wird die Liste der hochgeladenen Dateien angezeigt -->
-                <p>Keine Listen vorhanden.</p>
-            </div>
-        </div>
-
-        <form id="upload-form" enctype="multipart/form-data">
-            <div class="buttons">
-                <label class="upload-button">
-                    Dateien hochladen
-                    <input type="file" name="file" id="file-input" multiple onchange="uploadFiles()">
-                </label>
-                <button type="button" onclick="processAndDownloadOrderList()" class="action-button">
-                    Bestellliste erstellen und herunterladen
+            <!-- Tab Navigation -->
+            <nav class="tab-nav" role="tablist">
+                <button class="tab-button active"
+                        id="tab-generator"
+                        role="tab"
+                        aria-selected="true"
+                        aria-controls="panel-generator"
+                        onclick="switchTab('generator')">
+                    <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                        <polyline points="13 2 13 9 20 9"></polyline>
+                    </svg>
+                    <span>Bestelllisten-Generator</span>
                 </button>
+                <button class="tab-button"
+                        id="tab-management"
+                        role="tab"
+                        aria-selected="false"
+                        aria-controls="panel-management"
+                        onclick="switchTab('management')">
+                    <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M12 1v6m0 6v6m5.5-13.5l-4.2 4.2m-2.6 2.6l-4.2 4.2M23 12h-6m-6 0H5m13.5 5.5l-4.2-4.2m-2.6-2.6l-4.2-4.2"></path>
+                    </svg>
+                    <span>Verlagsverwaltung</span>
+                </button>
+            </nav>
+
+            <!-- Generator Panel -->
+            <div id="panel-generator" class="tab-panel active" role="tabpanel" aria-labelledby="tab-generator">
+
+                <!-- Workflow Steps -->
+                <div class="workflow-steps">
+                    <div class="step" id="step-1">
+                        <div class="step-indicator">
+                            <div class="step-number">1</div>
+                        </div>
+                        <div class="step-content">
+                            <h3 class="step-title">Dateien hochladen</h3>
+                            <p class="step-description">Excel-Dateien auswählen</p>
+                        </div>
+                    </div>
+                    <div class="step-divider"></div>
+                    <div class="step" id="step-2">
+                        <div class="step-indicator">
+                            <div class="step-number">2</div>
+                        </div>
+                        <div class="step-content">
+                            <h3 class="step-title">Verarbeiten</h3>
+                            <p class="step-description">Liste generieren</p>
+                        </div>
+                    </div>
+                    <div class="step-divider"></div>
+                    <div class="step" id="step-3">
+                        <div class="step-indicator">
+                            <div class="step-number">3</div>
+                        </div>
+                        <div class="step-content">
+                            <h3 class="step-title">Dublettenkontrolle</h3>
+                            <p class="step-description">Swisscovery prüfen</p>
+                        </div>
+                    </div>
+                    <div class="step-divider"></div>
+                    <div class="step" id="step-4">
+                        <div class="step-indicator">
+                            <div class="step-number">4</div>
+                        </div>
+                        <div class="step-content">
+                            <h3 class="step-title">Herunterladen</h3>
+                            <p class="step-description">Fertige Bestellliste</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upload Section -->
+                <section class="upload-section">
+                    <div class="section-header">
+                        <h2 class="section-title">
+                            <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            Datei-Upload
+                        </h2>
+                        <div class="file-count-badge" id="file-count-badge">0 Dateien</div>
+                    </div>
+
+                    <!-- Drag & Drop Zone -->
+                    <div class="dropzone" id="dropzone">
+                        <div class="dropzone-content">
+                            <svg class="dropzone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            <h3 class="dropzone-title">Dateien hierher ziehen</h3>
+                            <p class="dropzone-subtitle">oder</p>
+                            <label class="btn-upload" for="file-input">
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                                    <polyline points="13 2 13 9 20 9"></polyline>
+                                </svg>
+                                Dateien auswählen
+                            </label>
+                            <input type="file"
+                                   id="file-input"
+                                   name="file"
+                                   multiple
+                                   accept=".xlsx,.xls"
+                                   style="display: none;">
+                            <p class="dropzone-info">Nur Excel-Dateien (.xlsx, .xls)</p>
+                        </div>
+                    </div>
+
+                    <!-- File List -->
+                    <div class="file-list" id="file-list">
+                        <div class="empty-state" id="empty-state">
+                            <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                                <polyline points="13 2 13 9 20 9"></polyline>
+                            </svg>
+                            <p class="empty-text">Keine Dateien hochgeladen</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Action Panel: Verarbeiten -->
+                <section class="action-panel" id="action-panel" style="display: none;">
+                    <div class="action-panel-content">
+                        <div class="action-info">
+                            <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="9 11 12 14 22 4"></polyline>
+                                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                            </svg>
+                            <div>
+                                <h3 class="action-title">Bereit zur Verarbeitung</h3>
+                                <p class="action-description">Ihre Dateien wurden erfolgreich hochgeladen</p>
+                            </div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="processOrderList()">
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                </svg>
+                                Bestellliste erstellen
+                            </button>
+                            <button class="btn btn-secondary" onclick="clearAllFiles()">
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                                Alle entfernen
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Duplicate Check Panel -->
+                <section class="duplicate-panel" id="duplicate-panel" style="display: none;">
+                    <div class="duplicate-panel-content">
+                        <div class="duplicate-header">
+                            <svg class="duplicate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 11l3 3L22 4"></path>
+                                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+                            </svg>
+                            <div>
+                                <h3 class="duplicate-title">Liste erfolgreich erstellt!</h3>
+                                <p class="duplicate-description">Jetzt Dublettenkontrolle durchführen</p>
+                            </div>
+                        </div>
+                        <div class="duplicate-form">
+                            <div class="form-group">
+                                <label for="sru-url" class="form-label">
+                                    <svg class="label-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="2" y1="12" x2="22" y2="12"></line>
+                                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                                    </svg>
+                                    Swisscovery SRU-URL
+                                </label>
+                                <input type="text"
+                                       id="sru-url"
+                                       class="form-input"
+                                       value="https://slsp-eth.alma.exlibrisgroup.com/view/sru/41SLSP_ETH"
+                                       autocomplete="off">
+                                <p class="form-help">Geben Sie die SRU-URL für Swisscovery ein</p>
+                            </div>
+                            <div class="duplicate-buttons">
+                                <button class="btn btn-primary" onclick="checkDuplicates()">
+                                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                    </svg>
+                                    Dublettenkontrolle starten
+                                </button>
+                                <button class="btn btn-secondary" onclick="skipDuplicateCheck()">
+                                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M5 12h14M12 5l7 7-7 7"></path>
+                                    </svg>
+                                    Überspringen
+                                </button>
+                            </div>
+                        </div>
+                        <div id="duplicate-progress" class="duplicate-progress" style="display: none;">
+                            <div class="progress-spinner"></div>
+                            <p>Dublettenkontrolle läuft...</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Download Panel -->
+                <section class="download-panel" id="download-panel" style="display: none;">
+                    <div class="download-content">
+                        <svg class="download-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        <div class="download-text">
+                            <h3 class="download-title">Bestellliste bereit!</h3>
+                            <p class="download-description" id="download-description">Die Bestellliste wurde erfolgreich erstellt und ist bereit zum Download.</p>
+                        </div>
+                        <div class="download-buttons">
+                            <button class="btn btn-primary btn-download" onclick="downloadFile()">
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                Herunterladen
+                            </button>
+                            <button class="btn btn-success" onclick="clearAllFiles()">
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 5v14M5 12h14"></path>
+                                </svg>
+                                Neue Liste generieren
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
             </div>
-        </form>
 
-        <!-- Neue Liste Generieren Button, wird erst angezeigt, wenn eine Liste erstellt wurde -->
-        <div class="new-list-button-container" id="new-list-button-container" style="display:none;">
-            <button type="button" onclick="clearAllFiles()" class="action-button new-list-button">
-                Neue Liste generieren
-            </button>
-        </div>
+            <!-- Management Panel -->
+            <div id="panel-management" class="tab-panel" role="tabpanel" aria-labelledby="tab-management" style="display: none;">
 
-        <!-- Neuer Container für Mapping-Ergänzungen -->
-        <div class="add-mapping-container">
-            <h2>Fehlenden Verlag hinzufügen</h2>
-            <div class="mapping-form">
-                <input type="text" id="new-verlag" placeholder="Verlag">
-                <input type="text" id="new-lieferant" placeholder="Lieferant">
-                <button type="button" onclick="addMapping()" class="action-button">Hinzufügen</button>
+                <div class="management-header">
+                    <div>
+                        <h2 class="management-title">Verlagsverwaltung</h2>
+                        <p class="management-subtitle">Fügen Sie neue Verlag-Lieferant-Zuordnungen hinzu</p>
+                    </div>
+                    <svg class="management-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 20h9"></path>
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                    </svg>
+                </div>
+
+                <div class="management-content">
+                    <div class="info-card">
+                        <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                        <div class="info-text">
+                            <h4 class="info-title">Wann wird dies benötigt?</h4>
+                            <p class="info-description">Wenn ein Verlag in der Datenbank fehlt, können Sie hier die Zuordnung zum entsprechenden Lieferanten hinzufügen.</p>
+                        </div>
+                    </div>
+
+                    <form class="mapping-form" onsubmit="event.preventDefault(); addMapping();">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="new-verlag" class="form-label">
+                                    <svg class="label-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                                    </svg>
+                                    Verlag
+                                </label>
+                                <input type="text"
+                                       id="new-verlag"
+                                       class="form-input"
+                                       placeholder="z.B. Springer Verlag"
+                                       autocomplete="off">
+                            </div>
+                            <div class="form-group">
+                                <label for="new-lieferant" class="form-label">
+                                    <svg class="label-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="1" y="3" width="15" height="13"></rect>
+                                        <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                                        <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                                        <circle cx="18.5" cy="18.5" r="2.5"></circle>
+                                    </svg>
+                                    Lieferant
+                                </label>
+                                <input type="text"
+                                       id="new-lieferant"
+                                       class="form-input"
+                                       placeholder="z.B. Schweitzer Fachinformationen"
+                                       autocomplete="off">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            Zuordnung hinzufügen
+                        </button>
+                    </form>
+
+                    <div id="mapping-messages"></div>
+                </div>
             </div>
-            <div id="mapping-messages" class="flash-messages"></div>
-        </div>
-    </div>
 
-    <footer>
-        <div class="footer-container">
-            <p>&copy; 2024 ETH-Bibliothek - Integrierte Medienbearbeitung</p>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer" role="contentinfo">
+        <div class="footer-content">
+            <p>&copy; 2026 ETH-Bibliothek - Integrierte Medienbearbeitung - by Mathias Wyser</p>
         </div>
     </footer>
 
+    <!-- JavaScript -->
     <script>
-        console.log("JavaScript ist geladen und wird ausgeführt.");
+        // State Management
+        let currentTab = 'generator';
+        let uploadedFiles = [];
 
+        /**
+         * Show toast notification
+         */
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+
+            const iconMap = {
+                success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>',
+                error: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>',
+                info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>'
+            };
+
+            toast.innerHTML = `
+                <div class="toast-icon">${iconMap[type]}</div>
+                <div class="toast-message">${message}</div>
+                <button class="toast-close" onclick="this.parentElement.remove()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            `;
+
+            container.appendChild(toast);
+
+            setTimeout(() => toast.classList.add('show'), 100);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+
+        /**
+         * Switch between tabs
+         */
+        function switchTab(tab) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+                btn.setAttribute('aria-selected', 'false');
+            });
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            document.getElementById(`tab-${tab}`).setAttribute('aria-selected', 'true');
+
+            // Update tab panels
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.style.display = 'none';
+                panel.classList.remove('active');
+            });
+            const panel = document.getElementById(`panel-${tab}`);
+            panel.style.display = 'block';
+            setTimeout(() => panel.classList.add('active'), 10);
+
+            currentTab = tab;
+        }
+
+        /**
+         * Update workflow step
+         */
+        function updateWorkflowStep(step) {
+            document.querySelectorAll('.step').forEach((el, index) => {
+                el.classList.remove('active', 'completed');
+                if (index + 1 < step) {
+                    el.classList.add('completed');
+                } else if (index + 1 === step) {
+                    el.classList.add('active');
+                }
+            });
+        }
+
+        /**
+         * Update file count badge
+         */
+        function updateFileCount(count) {
+            const badge = document.getElementById('file-count-badge');
+            badge.textContent = `${count} ${count === 1 ? 'Datei' : 'Dateien'}`;
+            badge.classList.toggle('has-files', count > 0);
+        }
+
+        /**
+         * Fetch uploaded files
+         */
         function fetchUploadedFiles() {
-            console.log("fetchUploadedFiles() wurde aufgerufen.");
             fetch('/get_uploaded_files')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Fehler beim Abrufen der Dateiliste.');
-                    }
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
-                    let fileList = document.getElementById('file-list');
-                    fileList.innerHTML = ''; // Vorherigen Inhalt löschen
+                    uploadedFiles = data.error ? [] : data;
+                    renderFileList(uploadedFiles);
+                    updateFileCount(uploadedFiles.length);
 
-                    if (data.error) {
-                        fileList.innerHTML = `<p>Fehler beim Abrufen der Dateiliste: ${data.error}</p>`;
+                    if (uploadedFiles.length > 0) {
+                        updateWorkflowStep(2);
+                        document.getElementById('action-panel').style.display = 'block';
                     } else {
-                        if (data.length === 0) {
-                            fileList.innerHTML = '<p>Keine Listen vorhanden.</p>';
-                        } else {
-                            let ul = document.createElement('ul');
-                            data.forEach((file) => {
-                                let li = document.createElement('li');
-                                li.textContent = file;
-
-                                // Lösch-Button für jede Datei hinzufügen
-                                let deleteButton = document.createElement('button');
-                                deleteButton.textContent = 'Löschen';
-                                deleteButton.classList.add('delete-button');
-                                deleteButton.onclick = () => deleteFile(file, li);
-
-                                li.appendChild(deleteButton);
-                                ul.appendChild(li);
-                            });
-                            fileList.appendChild(ul);
-                        }
+                        updateWorkflowStep(1);
+                        document.getElementById('action-panel').style.display = 'none';
                     }
                 })
                 .catch(error => {
-                    console.error('Fehler beim Abrufen der Dateiliste:', error);
-                    document.getElementById('file-list').innerHTML = `<p>${error.message}</p>`;
+                    showToast('Fehler beim Laden der Dateiliste', 'error');
+                    console.error(error);
                 });
         }
 
-        // Datei-Liste beim Laden der Seite abrufen
-        window.onload = function () {
-            console.log("window.onload wird ausgeführt.");
-            fetchUploadedFiles();
-        };
-
-        function uploadFiles() {
-            let input = document.getElementById('file-input');
-            let files = input.files;
+        /**
+         * Render file list
+         */
+        function renderFileList(files) {
+            const fileList = document.getElementById('file-list');
+            const emptyState = document.getElementById('empty-state');
 
             if (files.length === 0) {
-                alert('Bitte wählen Sie Dateien zum Hochladen aus.');
-                return;
-            }
+                emptyState.style.display = 'flex';
+                fileList.querySelectorAll('.file-card').forEach(card => card.remove());
+            } else {
+                emptyState.style.display = 'none';
+                fileList.querySelectorAll('.file-card').forEach(card => card.remove());
 
-            let formData = new FormData();
-            for (let i = 0; i < files.length; i++) {
-                formData.append('file', files[i]);
+                files.forEach(file => {
+                    const card = document.createElement('div');
+                    card.className = 'file-card';
+                    card.innerHTML = `
+                        <div class="file-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="12" y1="18" x2="12" y2="12"></line>
+                                <line x1="9" y1="15" x2="15" y2="15"></line>
+                            </svg>
+                        </div>
+                        <div class="file-info">
+                            <div class="file-name">${file}</div>
+                            <div class="file-meta">Excel-Datei</div>
+                        </div>
+                        <button class="file-delete" onclick="deleteFile('${file}', this)" aria-label="${file} löschen">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                    `;
+                    fileList.appendChild(card);
+                });
+            }
+        }
+
+        /**
+         * Upload files
+         */
+        function uploadFiles(files) {
+            if (files.length === 0) return;
+
+            const formData = new FormData();
+            for (let file of files) {
+                formData.append('file', file);
             }
 
             fetch('/', {
@@ -133,144 +542,236 @@
                 body: formData
             })
                 .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Fehler beim Hochladen der Dateien.');
-                    }
+                    if (!response.ok) throw new Error('Upload fehlgeschlagen');
                     return response.text();
                 })
-                .then(data => {
-                    console.log(data);
-                    fetchUploadedFiles(); // Liste aktualisieren, ohne die Seite neu zu laden
+                .then(() => {
+                    showToast(`${files.length} ${files.length === 1 ? 'Datei' : 'Dateien'} erfolgreich hochgeladen`, 'success');
+                    fetchUploadedFiles();
+                    document.getElementById('file-input').value = '';
                 })
                 .catch(error => {
-                    console.error('Fehler beim Hochladen der Dateien:', error);
+                    showToast('Fehler beim Hochladen', 'error');
+                    console.error(error);
                 });
         }
 
-        function deleteFile(fileName, listItem) {
-            fetch(`/delete_file/${fileName}`, {
-                method: 'DELETE'
-            })
+        /**
+         * Delete file
+         */
+        function deleteFile(fileName, button) {
+            const card = button.closest('.file-card');
+            card.style.opacity = '0.5';
+            button.disabled = true;
+
+            fetch(`/delete_file/${fileName}`, { method: 'DELETE' })
                 .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Fehler beim Löschen der Datei.');
-                    }
+                    if (!response.ok) throw new Error('Löschen fehlgeschlagen');
                     return response.text();
                 })
-                .then(data => {
-                    console.log(data);
-                    listItem.remove(); // Das Listenelement aus der Anzeige entfernen
-                    // Prüfen, ob die Liste leer ist
-                    if (document.getElementById('file-list').getElementsByTagName('ul')[0]?.children.length === 0) {
-                        document.getElementById('file-list').innerHTML = '<p>Keine Listen vorhanden.</p>';
-                    }
+                .then(() => {
+                    showToast('Datei gelöscht', 'success');
+                    fetchUploadedFiles();
                 })
                 .catch(error => {
-                    console.error('Fehler beim Löschen der Datei:', error);
+                    showToast('Fehler beim Löschen', 'error');
+                    card.style.opacity = '1';
+                    button.disabled = false;
+                    console.error(error);
                 });
         }
 
-        function processAndDownloadOrderList() {
-            // Diese Funktion ruft zuerst den Prozess-Endpunkt auf und dann den Download-Endpunkt
-            fetch('/process', {
-                method: 'POST'
+        /**
+         * Process order list (without automatic download)
+         */
+        function processOrderList() {
+            updateWorkflowStep(2);
+            document.getElementById('action-panel').style.display = 'none';
+
+            fetch('/process', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    showToast('Bestellliste erfolgreich erstellt', 'success');
+                    updateWorkflowStep(3);
+                    document.getElementById('duplicate-panel').style.display = 'block';
+                })
+                .catch(error => {
+                    showToast('Fehler bei der Verarbeitung: ' + error.message, 'error');
+                    updateWorkflowStep(2);
+                    document.getElementById('action-panel').style.display = 'block';
+                    console.error(error);
+                });
+        }
+
+        /**
+         * Check for duplicates in Swisscovery
+         */
+        function checkDuplicates() {
+            const sruUrl = document.getElementById('sru-url').value.trim();
+
+            if (!sruUrl) {
+                showToast('Bitte geben Sie die SRU-URL ein', 'error');
+                return;
+            }
+
+            // Hide form, show progress
+            document.querySelector('.duplicate-form').style.display = 'none';
+            document.getElementById('duplicate-progress').style.display = 'flex';
+
+            fetch('/check_duplicates', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sru_url: sruUrl })
             })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Fehler bei der Verarbeitung der Bestellliste.');
-                    }
-                    return response.text();
-                })
+                .then(response => response.json())
                 .then(data => {
-                    console.log(data);
-                    // Direkt zur Download-Route weiterleiten
-                    downloadOrderList();
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
 
-                    // Buttons ausblenden
-                    document.querySelector('.upload-button').style.display = 'none';
-                    document.querySelector('.action-button').style.display = 'none';
+                    const stats = data.stats;
+                    const message = `Dublettenkontrolle abgeschlossen: ${stats.duplicates} von ${stats.checked} Datensätzen sind Dubletten.`;
+                    showToast(message, stats.duplicates > 0 ? 'info' : 'success');
 
-                    // Zeige den "Neue Liste Generieren" Button an
-                    document.getElementById('new-list-button-container').style.display = 'block';
+                    // Hide duplicate panel, show download panel
+                    document.getElementById('duplicate-panel').style.display = 'none';
+                    document.getElementById('download-panel').style.display = 'block';
+
+                    // Update download description
+                    const desc = stats.duplicates > 0
+                        ? `${stats.duplicates} Dublette(n) wurden markiert. Die Liste ist bereit zum Download.`
+                        : 'Keine Dubletten gefunden. Die Liste ist bereit zum Download.';
+                    document.getElementById('download-description').textContent = desc;
+
+                    updateWorkflowStep(4);
                 })
                 .catch(error => {
-                    console.error('Fehler bei der Verarbeitung der Bestellliste:', error);
+                    showToast('Fehler bei der Dublettenkontrolle: ' + error.message, 'error');
+                    document.querySelector('.duplicate-form').style.display = 'block';
+                    document.getElementById('duplicate-progress').style.display = 'none';
+                    console.error(error);
                 });
         }
 
-        function downloadOrderList() {
-            // Die Seite wird direkt zur Download-Route weitergeleitet
+        /**
+         * Skip duplicate check
+         */
+        function skipDuplicateCheck() {
+            document.getElementById('duplicate-panel').style.display = 'none';
+            document.getElementById('download-panel').style.display = 'block';
+            updateWorkflowStep(4);
+            showToast('Dublettenkontrolle übersprungen', 'info');
+        }
+
+        /**
+         * Download the generated file
+         */
+        function downloadFile() {
             window.location.href = '/download';
+            showToast('Download gestartet', 'success');
         }
 
+        /**
+         * Clear all files
+         */
         function clearAllFiles() {
-            fetch('/clear_files', {
-                method: 'DELETE'
-            })
+            fetch('/clear_files', { method: 'DELETE' })
                 .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Fehler beim Löschen der Dateien.');
-                    }
+                    if (!response.ok) throw new Error('Löschen fehlgeschlagen');
                     return response.text();
                 })
-                .then(data => {
-                    console.log(data);
+                .then(() => {
+                    // Hide all panels
+                    document.getElementById('action-panel').style.display = 'none';
+                    document.getElementById('duplicate-panel').style.display = 'none';
+                    document.getElementById('download-panel').style.display = 'none';
 
-                    // Buttons wieder anzeigen
-                    document.querySelector('.upload-button').style.display = 'inline-block';
-                    document.querySelector('.action-button').style.display = 'inline-block';
+                    // Reset workflow
+                    updateWorkflowStep(1);
 
-                    // Verstecke den "Neue Liste Generieren" Button
-                    document.getElementById('new-list-button-container').style.display = 'none';
+                    // Reset duplicate form
+                    document.querySelector('.duplicate-form').style.display = 'block';
+                    document.getElementById('duplicate-progress').style.display = 'none';
 
-                    // Wartezeit einfügen, um sicherzustellen, dass das Dateisystem alle Änderungen verarbeitet hat
                     setTimeout(() => {
-                        window.location.reload(); // Seite neu laden, nachdem alle Dateien gelöscht wurden
-                    }, 1000);
+                        window.location.reload();
+                    }, 500);
                 })
                 .catch(error => {
-                    console.error('Fehler beim Löschen der Dateien:', error);
+                    showToast('Fehler beim Löschen', 'error');
+                    console.error(error);
                 });
         }
 
+        /**
+         * Add mapping
+         */
         function addMapping() {
-            const verlag = document.getElementById("new-verlag").value.trim();
-            const lieferant = document.getElementById("new-lieferant").value.trim();
+            const verlag = document.getElementById('new-verlag').value.trim();
+            const lieferant = document.getElementById('new-lieferant').value.trim();
 
-            if (verlag === "" || lieferant === "") {
-                alert("Bitte sowohl Verlag als auch Lieferant eingeben.");
+            if (!verlag || !lieferant) {
+                showToast('Bitte beide Felder ausfüllen', 'error');
                 return;
             }
 
             fetch('/add_mapping', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    verlag: verlag,
-                    lieferant: lieferant
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ verlag, lieferant })
             })
                 .then(response => response.json())
                 .then(data => {
                     if (data.error) {
-                        document.getElementById("mapping-messages").textContent = data.error;
+                        showToast(data.error, 'error');
                     } else {
-                        document.getElementById("mapping-messages").textContent = data.message;
+                        showToast(data.message || 'Zuordnung erfolgreich hinzugefügt', 'success');
+                        document.getElementById('new-verlag').value = '';
+                        document.getElementById('new-lieferant').value = '';
                     }
-                    setTimeout(() => {
-                        document.getElementById("mapping-messages").textContent = "";
-                    }, 3000);
                 })
                 .catch(error => {
-                    console.error('Fehler beim Hinzufügen des Mappings:', error);
-                    document.getElementById("mapping-messages").textContent = "Fehler beim Hinzufügen des Mappings.";
-                    setTimeout(() => {
-                        document.getElementById("mapping-messages").textContent = "";
-                    }, 3000);
+                    showToast('Fehler beim Hinzufügen', 'error');
+                    console.error(error);
                 });
         }
+
+        // Drag & Drop
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('file-input');
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, e => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropzone.addEventListener(eventName, () => dropzone.classList.add('dragover'));
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, () => dropzone.classList.remove('dragover'));
+        });
+
+        dropzone.addEventListener('drop', e => {
+            const files = e.dataTransfer.files;
+            uploadFiles(files);
+        });
+
+        fileInput.addEventListener('change', e => {
+            uploadFiles(e.target.files);
+        });
+
+        // Initialize
+        window.onload = () => {
+            fetchUploadedFiles();
+            updateWorkflowStep(1);
+        };
     </script>
 </body>
 
