@@ -199,6 +199,10 @@ class DuplicateChecker:
             year_field = marc_record.find('.//marc:datafield[@tag="264"]/marc:subfield[@code="c"]', self.namespaces)
             record_data['year'] = year_field.text.strip() if year_field is not None else ''
 
+            # Trägertyp (338$a)
+            carrier_field = marc_record.find('.//marc:datafield[@tag="338"]/marc:subfield[@code="a"]', self.namespaces)
+            record_data['carrier'] = carrier_field.text.strip() if carrier_field is not None else ''
+
             return record_data
 
         except Exception as e:
@@ -233,8 +237,10 @@ class DuplicateChecker:
 
         # Neue Spalten hinzufügen für Dubletten-Info
         max_col = sheet.max_column
-        duplicate_col = max_col + 1
-        count_col = max_col + 2
+        duplicate_col = max_col + 1    # True/False
+        count_col = max_col + 2        # Anzahl Treffer
+        carrier_col = max_col + 3      # 338$a aus SRU
+        isbn_sru_col = max_col + 4     # 020$a aus SRU
 
         # Header setzen
         if sheet.cell(1, duplicate_col).value is None:
@@ -244,6 +250,14 @@ class DuplicateChecker:
         if sheet.cell(1, count_col).value is None:
             sheet.cell(1, count_col, 'Anzahl Treffer')
             sheet.cell(1, count_col).font = Font(bold=True)
+
+        if sheet.cell(1, carrier_col).value is None:
+            sheet.cell(1, carrier_col, '338$a')
+            sheet.cell(1, carrier_col).font = Font(bold=True)
+
+        if sheet.cell(1, isbn_sru_col).value is None:
+            sheet.cell(1, isbn_sru_col, '020$a')
+            sheet.cell(1, isbn_sru_col).font = Font(bold=True)
 
         # Farben für Markierung
         yellow_fill = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
@@ -289,6 +303,17 @@ class DuplicateChecker:
                         sheet.cell(row_idx, duplicate_col).font = red_font
                         sheet.cell(row_idx, count_col, result['count'])
                         sheet.cell(row_idx, count_col).fill = yellow_fill
+                        # Zusatz: 338$a und 020$a aus dem ersten Treffer in eigene Spalten schreiben
+                        if result['records']:
+                            first_rec = result['records'][0]
+
+                            # 338$a (carrier)
+                            carrier = first_rec.get('carrier', '')
+                            sheet.cell(row_idx, carrier_col, carrier)
+
+                            # 020$a (ISBN aus SRU)
+                            isbn_sru = first_rec.get('isbn', '')
+                            sheet.cell(row_idx, isbn_sru_col, isbn_sru)
                     else:
                         sheet.cell(row_idx, duplicate_col, 'NEIN')
                         sheet.cell(row_idx, count_col, 0)
