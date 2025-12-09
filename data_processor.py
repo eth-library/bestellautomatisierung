@@ -38,7 +38,8 @@ class DataProcessor:
             "E01": "01",
             "E03": "21",
             "E05": "01",
-            "E06": "01"
+            "E06": "01",
+            "E98": "63"
         }
 
         # Output-Ordner definieren
