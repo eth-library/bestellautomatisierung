@@ -21,7 +21,7 @@ class DuplicateChecker:
         """
         self.sru_base_url = sru_base_url
         self.timeout = 10
-        self.delay_between_requests = 0.5  # Sekunden zwischen Anfragen
+        self.delay_between_requests = 0.3  # Sekunden zwischen Anfragen
 
         # Namespaces für XML-Parsing
         self.namespaces = {
