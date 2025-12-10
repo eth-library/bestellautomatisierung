@@ -98,7 +98,7 @@ def process_files():
     ensure_directory_exists(paths["input_dir"])  # Sicherstellen, dass das Verzeichnis existiert
 
     try:
-        # Ab Oktober wird das nächste Jahr verwendet
+        # Ab November wird das nächste Jahr verwendet im Feld 245$c
         now = datetime.now()
         year = now.year + 1 if now.month >= 11 else now.year
         data_processor = DataProcessor(paths, year)
