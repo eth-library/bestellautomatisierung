@@ -6,7 +6,7 @@ class PathManager:
 
     def get_paths(self):
         paths = {
-            "output_file": os.path.join(self.project_dir, 'output' 'output.xlsx'),
+            "output_file": os.path.join(self.project_dir, 'output', 'output.xlsx'),
             "input_dir": os.path.join(self.project_dir, 'uploads'),
             "csv_mapping_949v": os.path.join(self.project_dir, 'Mapping', 'mapping_949v.csv'),
             "csv_mapping_articles": os.path.join(self.project_dir, 'Mapping', 'mapping_articles.csv'),
