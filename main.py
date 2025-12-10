@@ -100,7 +100,7 @@ def process_files():
     try:
         # Ab Oktober wird das nächste Jahr verwendet
         now = datetime.now()
-        year = now.year + 1 if now.month >= 10 else now.year
+        year = now.year + 1 if now.month >= 11 else now.year
         data_processor = DataProcessor(paths, year)
         input_files = os.listdir(paths["input_dir"])
         input_file_paths = [os.path.join(paths["input_dir"], file) for file in input_files if file.endswith('.xlsx')]
